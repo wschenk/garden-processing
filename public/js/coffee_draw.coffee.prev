@@ -1,0 +1,135 @@
+coffee_draw = (@canvas) ->
+  @x = 100
+  @y = 100
+  @xspeed = 1
+  @yspeed = 3.3
+
+  @canvas.setup = () =>
+    @width = @canvas.width()
+    @height = @canvas.height()
+    # @canvas.background(255)
+    @actor1 = new Mover1( @canvas )
+    @actor2 = new Mover1( @canvas )
+    
+  @canvas.draw = () =>
+    @actor1.draw()
+    @actor2.draw()
+    @canvas.ellipse( @canvas.mouseX, @canvas.mouseY, 2,2)
+
+class Mover
+  constructor: (@canvas) ->
+    console.log( "New Actor" );
+    @location = Vector.random( @canvas.width, @canvas.height );
+    @velocity = new Vector(0,0)
+    @acceleration = new Vector( 0, 0 )
+    console.log( @location.x + " " + @location.y )
+
+  adjust_acceleration: ->
+
+  check_location: ->
+
+  draw: ->
+    # @adjust_acceleration()
+    # @velocity.add( @acceleration )
+    # @location.add( @velocity )
+    # @check_location()
+    console.log( @location.x, @location.y )
+    console.log( "123")
+    @canvas.ellipse( @location.x, @location.y, 20, 20 )
+
+class Mover1 extends Mover
+  @count = 0
+  constructor: (@canvas) ->
+    super( @canvas )
+  
+  adjust_acceleration: ->
+    mouse = Vector.mouse( @canvas )
+    @acceleration = Vector.sub( mouse, @location )
+    @acceleration.normalize( .1 )
+    @velocity.limit( 10 )
+    @velocity.mult(.99)
+    # console.log( @acceleration.x )
+    # @acceleration.y = @canvas.noise( @count*100) - .5
+
+  check_location: ->
+    if( @location.x > @canvas.width )
+      @location.x = 0
+
+    if( @location.x < 0 )
+      @location = @canvas.width
+
+    if( @location.y > @canvas.height )
+      @location.y = 0
+
+    if( location.y < 0 )
+      @location.y = @canvas.height
+
+class Vector
+  constructor: (@x, @y) ->
+
+  add: (v) ->
+    @x += v.x
+    @y += v.y
+
+  mult: (s) ->
+    @x *= s
+    @y *= s
+
+  normalize: (scale=1)->
+    mag = @mag()
+    @x  = @x / mag * scale
+    @y  = @y / mag * scale
+
+  mag: ->
+    Math.sqrt( @x*@x + @y*@y )
+
+  limit: (size)->
+    if @mag() > size
+      @normalize( size )
+
+  @random: (height, width) ->
+    new Vector( Math.floor( Math.random() *  height ), Math.floor( Math.random() * width ) )
+
+  @mouse: (canvas) ->
+    new Vector( canvas.mouseX, canvas.mouseY )
+
+  @sub: (v1, v2) ->
+    new Vector( v1.x - v2.x, v1.y - v2.y )
+
+class Canvas
+  constructor: (@id, @sketch) ->
+    @dom_canvas = $("#" + @id)
+    @dom_canvas.width( $(window).width() ).height( $(window).height() )
+    @c = @dom_canvas[0].getContext '2d'
+    @sketch(this)
+    @setup()
+    @loop()
+
+  setup: ->
+  draw: ->
+
+  width: () -> @dom_canvas.width()
+  height: () -> @dom_canvas.height()
+
+  loop: =>
+    @draw()
+    # requestAnimationFrame( @loop )
+
+  background: (color) ->
+    @c.clearRect( 0, 0, @c.width, @c.height )
+
+  ellipse: (x,y,w,h) ->
+    @c.beginPath()
+    @c.strokeStyle = "#000000"
+    @c.fillStyle = "#333333"
+    startAngle = 0
+    antiClockwise = false
+    @c.fillRect(x, y, 10, 10)
+    console.log(x,y)
+    #@c.arc(x, y, w, startAngle, startAngle + Math.PI, antiClockwise);
+    @c.closePath()
+    @c.lineWidth = 1
+    @c.stroke()
+
+$(document).ready ->
+  canvas = new Canvas "processing", coffee_draw
