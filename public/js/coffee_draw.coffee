@@ -13,7 +13,7 @@ class Canvas
     @canvas_element.mousemove (e) =>
       @mouseX = e.pageX
       @mouseY = e.pageY
-
+    @canvas_element.click (e) => @click()
 
   fullScreen: ->
     @set_dimensions( $(window).width(), $(window).height() )
@@ -31,6 +31,8 @@ class Canvas
 
   clear: ->
     @c.clearRect( 0, 0, @width, @height )
+
+  click: ->
   
   circle: (v,r) ->
     @c.beginPath()
@@ -71,6 +73,9 @@ class Vector
   mult: (s) ->
     @x *= s
     @y *= s
+
+  @mult: (v,s) ->
+    new Vector( v.x*s, v.y*s )
 
   normalize: (scale=1)->
     mag = @mag()
@@ -122,10 +127,20 @@ class MouseWatcher
     requestAnimationFrame @watch
 
 class Mover
+  @mass = 1
+
   constructor: (@canvas) ->
     @location = Vector.random( @canvas.width, @canvas.height )
     @velocity = new Vector(0,0)
     @acceleration = new Vector( .01, .1 )
+
+  reset: ->
+    @location = Vector.random( @canvas.width, @canvas.height )
+    @velocity = Vector.random( 10, 10 )    
+    @velocity.x -= 5
+    @velocity.y -= 5
+    @mass = Math.random() * 10 + 1
+    @velocity
 
   adjust_acceleration: ->
 
@@ -133,7 +148,7 @@ class Mover
 
   move: ->
     @adjust_acceleration()
-    @velocity.add( @acceleration )
+    @velocity.add( Vector.mult( @acceleration, 1/@mass ) )
     @location.add( @velocity )
     @check_location()
 
@@ -173,7 +188,9 @@ class Mover1 extends Mover
 
 class Simulation
   constructor: (@canvas, @ticksize=6) ->
-    @actors = (new Mover1( @canvas ) for [0..3] )
+    @actors = (new Mover1( @canvas ) for [0..10] )
+    @canvas.click = =>
+      actor.reset() for actor in @actors
 
   start: ->
     @lastrender = new Date() / @ticksize
